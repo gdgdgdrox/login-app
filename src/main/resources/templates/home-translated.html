@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Translated</title>
+</head>
+<body>
+    <h1 th:text="#{home}"></h1>
+    <div th:object="${userDetails}">
+        <div>
+            <span th:text="#{welcome} + ','"></span>
+            <span th:text="*{fullName}"></span>
+        </div>
+        <div>
+            <span th:text="#{username} + ':'"></span>
+            <span th:text="*{username}"></span>
+        </div>
+        <div>
+            <span th:text="#{role} + ':'"></span>
+            <span th:each="role, iterStat : *{authorities}">
+                <span th:text="${role}"></span>
+                <span th:unless="${iterStat.last}">, </span>
+            </span> 
+        </div>
+    </div>
+    <div sec:authorize="hasRole('MANAGER')">
+        <a th:href="@{/restricted}" th:text="#{manager-link}"></a>
+    </div>
+    <form th:action="@{/logout}" method="POST">
+        <input type="submit" th:value="#{logout}">
+    </form>
+    <hr>
+    <div>
+        <span th:text="#{language} +':'"></span>
+        <a th:href="@{'?lang=en'}" th:text="#{english-language}"></a>
+        <a th:href="@{'?lang=zh'}" th:text="#{chinese-language}"></a>
+    </div>
+</body>
+</html>
