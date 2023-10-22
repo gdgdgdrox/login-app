@@ -1,49 +1,45 @@
 package com.example.loginassignment.service;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.example.loginassignment.entity.User;
 import com.example.loginassignment.model.CustomUserDetails;
+import com.example.loginassignment.repository.UserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService{
-
+    
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private UserRepository userRepo;
 
     @Override
     public UserDetails loadUserByUsername(String username) {
-        String query = "select username, password, enabled, full_name from users where username=?";
-        SqlRowSet result = jdbcTemplate.queryForRowSet(query, username);
-        if (result.next()){
-            String password = result.getString("password");
-            boolean enabled = result.getBoolean("enabled");
-            String fullName = result.getString("full_name");
-            List<String> roles = loadUserAuthorities(username);
-            Collection<GrantedAuthority> authorities = roles.stream()
-                    .map(role -> new SimpleGrantedAuthority(role))
-                    .collect(Collectors.toList());
-            CustomUserDetails customUserDetails = new CustomUserDetails(username,password,enabled,fullName,authorities);
-            return customUserDetails;
+        Optional<User> optUser = userRepo.findByUsername(username);
+        if (optUser.isPresent()){
+            User user = optUser.get();
+            Collection<SimpleGrantedAuthority> authorities = user.getAuthorities().stream()
+                    .map(authority -> new SimpleGrantedAuthority(authority.getAuthority()))
+                    .toList();
+                
+            return CustomUserDetails.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .fullName(user.getFullName())
+                .authorities(authorities)
+                .build();
         }
         else{
-            throw new UsernameNotFoundException("User not found with username: " + username);
+            throw new UsernameNotFoundException("Unable to find %s".formatted(username));
         }
     }
-    
-    private List<String> loadUserAuthorities(String username){
-        String queryRoles = "select authority from authorities where username=?";
-        return jdbcTemplate.queryForList(queryRoles, String.class, username);
-    }
+
+
 }

@@ -15,22 +15,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain SecurityFilterChain(HttpSecurity http) throws Exception{
-        http.userDetailsService(customUserDetailsService);
-        
-        http.authorizeHttpRequests(authorize -> {
-            authorize.requestMatchers("/restricted").hasRole("MANAGER");
-            authorize.anyRequest().authenticated();
+        http.authorizeHttpRequests(authorize -> { 
+            authorize
+            .requestMatchers("/home").authenticated()
+            .requestMatchers("/restricted").hasRole("MANAGER")
+            .anyRequest().authenticated();
         })
         .formLogin(form -> {
             form.loginPage("/login")
             .loginProcessingUrl("/processFormLogin")
-            .defaultSuccessUrl("/")
+            .defaultSuccessUrl("/home")
             .permitAll();
         }).logout(logout -> {
             logout.logoutUrl("/logout")
             .permitAll();
         });
         
+        http.userDetailsService(customUserDetailsService);
         return http.build();
     }
     }
